@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Быстрые проверки при коммите (SPEC §22). Включаются командой `make hooks`.
+# Полная проверка перед пушем — `make check`.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+
+for svc in services/corp-ext services/fake-llm; do
+  if grep -q "^$svc/.*\.py$" <<<"$staged"; then
+    (cd "$svc" && uv run ruff check . && uv run ruff format --check .)
+  fi
+done
+
+if grep -qE '\.md$|^services/corp-ext/app/modules/' <<<"$staged"; then
+  python3 tools/docs_check.py
+fi
+
+# Секреты в git не попадают (SPEC §17.1).
+if grep -qE '(^|/)\.env$|^config/corp-ext\.yaml$|^config/weknora/\.env\.weknora$|^secrets/' <<<"$staged"; then
+  echo "pre-commit: в коммит попал файл с секретами или локальными настройками" >&2
+  exit 1
+fi

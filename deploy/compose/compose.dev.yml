@@ -1,0 +1,74 @@
+# Dev-стек, часть 1: хранилища и свои сервисы.
+# WeKnora (из подмодуля), Keycloak, mock-AD, embed/rerank на CPU и тестовая MS SQL
+# добавляются на этапе 0–1 после пилота (docs/status.md).
+name: ai-assistant-dev
+
+services:
+  postgres:
+    # Тот же образ, что в docker-compose.yml WeKnora: pgvector + pg_search (BM25).
+    image: paradedb/paradedb:v0.25.11-pg17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev-only-password}
+      POSTGRES_DB: ${POSTGRES_DB:-weknora}
+      PARADEDB_TELEMETRY: "false"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      # Только по TCP: при первой инициализации Postgres временно поднимается на unix-сокете
+      # и перезапускается; проверка через сокет называла его готовым раньше времени.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7.0-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  fake-llm:
+    build: ../../services/fake-llm
+    ports:
+      - "127.0.0.1:8001:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  corp-ext-migrate:
+    build: ../../services/corp-ext
+    command: ["alembic", "upgrade", "head"]
+    environment: &corp-ext-env
+      CORP_EXT_CONFIG: /etc/corp-ext/corp-ext.yaml
+      CORP_EXT_DATABASE__DSN: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-dev-only-password}@postgres:5432/${POSTGRES_DB:-weknora}
+      CORP_EXT_REDIS__URL: redis://redis:6379/5
+    volumes: &corp-ext-config
+      - ../../config/corp-ext.example.yaml:/etc/corp-ext/corp-ext.yaml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  corp-ext:
+    build: ../../services/corp-ext
+    environment: *corp-ext-env
+    volumes: *corp-ext-config
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      corp-ext-migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:

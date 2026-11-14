@@ -1,0 +1,15 @@
+# Политика модерации (SPEC §10.6): категории и уровни для report_incident и guard-модели.
+categories:
+  - {code: illegal, title: Противоправные действия}
+  - {code: threats, title: Угрозы}
+  - {code: extremism, title: Экстремизм}
+  - {code: malware, title: Вредоносный код и взлом}
+  - {code: personal_data, title: Попытки получить чужие персональные данные}
+  - {code: jailbreak, title: Попытки обойти ограничения}
+  - {code: other, title: Иное}
+severities: [low, medium, high, critical]
+report:                      # скрытый репорт — после запуска (этап 13)
+  min_interval_minutes: 10   # не больше одного инцидента на чат за интервал; повторы увеличивают счётчик
+guard:
+  enabled: true              # первая линия (SPEC §10.6); по умолчанию только создаёт инциденты
+  block_categories: []

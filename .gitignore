@@ -1,0 +1,22 @@
+# секреты и локальные настройки
+.env
+*.env.local
+config/corp-ext.yaml
+config/weknora/.env.weknora
+secrets/
+# python
+.venv/
+__pycache__/
+*.pyc
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+# node
+node_modules/
+dist/
+*.tsbuildinfo
+# прочее
+.DS_Store
+.idea/
+.vscode/
+*.log

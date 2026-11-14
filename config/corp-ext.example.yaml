@@ -1,0 +1,26 @@
+# Пример для dev-профиля (mock-AD). Рабочий файл — config/corp-ext.yaml, в git не попадает.
+# Секреты сюда не пишутся: только файлы секретов или переменные CORP_EXT_* (SPEC §6.3).
+env: dev
+log:
+  level: INFO
+  json_output: false
+auth:
+  bootstrap_admins: [ivanov]
+  access_group: ""
+  per_ip: {max_failures: 20, window_minutes: 15, lock_minutes: 60}
+ldap:
+  urls: ["ldaps://mock-ad:636"]
+  ca_cert_file: /run/secrets/corp_ca.pem
+  bind_dn: "CN=svc-ai-assistant,OU=Service Accounts,DC=corp,DC=local"
+  bind_password_file: /run/secrets/ldap_bind_password
+  base_dn: "DC=corp,DC=local"
+  attributes:
+    department: department   # в dev отдел заполнен, чтобы тестировать источник ad_department
+  sync_interval_minutes: 60
+groups:
+  default_groups: []
+  sources:
+    manual: {enabled: true}
+    rule: {enabled: false, rules: []}
+    ad_department: {enabled: false, attribute: department, mapping_mode: explicit, on_unmapped: report}
+    ad_group: {enabled: false, nested: true}

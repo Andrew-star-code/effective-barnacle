@@ -1,0 +1,5 @@
+# Seed политик лимитов (SPEC §14.2); дальше правятся в corp-admin.
+- {scope: global, metric: messages, window: day, limit: 200}
+- {scope: global, metric: tokens, window: day, limit: 2000000}
+- {scope: global, metric: concurrent_generations, limit: 2}
+- {scope: global, metric: uploads, window: day, limit: 100}
