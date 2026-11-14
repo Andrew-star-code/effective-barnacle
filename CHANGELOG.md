@@ -34,6 +34,11 @@
   P-01 поднял hit@5 BM25 с 0,906 до 0,969. В реестр патчей добавлен P-12 — BM25-поиск в базах
   без генерации вопросов падает на ParadeDB 0.25.11.
 
+- Форк WeKnora `Andrew-star-code/WeKnora` (временно на GitHub), ветка `corp/v0.9.0`; подмодуль переключён на него.
+  `make weknora-build` собирает образы WeKnora из подмодуля (`tools/weknora-build.sh`, контекст — `git archive` коммита).
+- P-13: `weknora-app` из исходников `v0.9.0` не собирался на go 1.26.11 (архив `anydoc` с LLVM bitcode) —
+  секции bitcode вырезаются после сборки архива.
+
 ### Исправлено
 
 - Профиль Ollama: размышления `qwen3.5` выключаются (`reasoning_effort: none`); без этого служебные
