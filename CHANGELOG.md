@@ -21,6 +21,9 @@
   каталоги моделей `config/weknora/builtin_models.dev.yaml` (fake-llm) и `builtin_models.ollama.yaml`
   (`qwen3.5:9b` и `bge-m3` из Ollama на машине разработчика), переключение — `WEKNORA_MODELS_FILE`.
 - Dev-стек: реранкер `BAAI/bge-reranker-v2-m3` на CPU (сервис `rerank`, Hugging Face TEI `cpu-1.9.2`).
+- Dev-стек: mock-AD (Samba AD DC `CORP.LOCAL`, свой образ `deploy/mock-ad/`, тестовые сотрудники из `users.tsv`) и
+  Keycloak 26.4.5 с realm `corp` (`config/keycloak/realm-corp.dev.json`: федерация LDAP, защита от перебора, события,
+  клиент `weknora`); WeKnora входит через OIDC.
 - P-01: SQL русского BM25-индекса (`stemmer=russian`, русские стоп-слова, нижний регистр) —
   `services/corp-ext/app/modules/provisioning/sql/search_index.sql`, проверен на dev-стеке.
 

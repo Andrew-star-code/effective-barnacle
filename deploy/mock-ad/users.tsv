@@ -1,0 +1,6 @@
+login	first	middle	last	email	department	title	phone	enabled	groups
+ivanov	Иван	Иванович	Иванов	ivanov@corp.local	Отдел информационных технологий	Начальник отдела	4401	yes	AI-Users,IT
+petrova	Мария	Сергеевна	Петрова	petrova@corp.local	Бухгалтерия	Главный бухгалтер	4402	yes	AI-Users,Accounting
+smirnov	Алексей	Петрович	Смирнов	smirnov@corp.local	Отдел кадров	Специалист	4417	yes	AI-Users,HR
+smirnova	Ольга	Викторовна	Смирнова	smirnova@corp.local	Бухгалтерия	Бухгалтер	4403	yes	Accounting
+sidorov	Пётр	Андреевич	Сидоров	sidorov@corp.local	Отдел продаж	Менеджер	4404	no	AI-Users
