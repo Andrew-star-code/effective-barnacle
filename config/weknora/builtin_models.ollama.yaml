@@ -6,8 +6,8 @@
 # обновляются на месте. Векторы fake-llm и bge-m3 несовместимы (размерность та же — 1024),
 # поэтому базы знаний, проиндексированные под другим профилем, нужно переиндексировать.
 #
-# Ограничение: режим размышлений Ollama управляется иначе, чем у vLLM; пилотный пункт 7
-# (переключатель thinking) проверяется только на vLLM.
+# Режим размышлений Ollama управляется иначе, чем у vLLM (там — chat_template_kwargs);
+# пилотный пункт 7 (переключатель thinking) для прода проверяется на vLLM.
 builtin_models:
   - id: builtin-dev-chat
     type: KnowledgeQA
@@ -19,6 +19,16 @@ builtin_models:
       api_key: dev-not-a-secret
       provider: generic
       context_window: 32768
+      # Без этого провайдер generic не передаёт «размышления выкл», qwen3.5 в Ollama размышляет
+      # всегда и съедает весь лимит токенов служебных генераций (описание документа — 1024 токена,
+      # ответ пустой). Ollama выключает размышления только по reasoning_effort: "none"
+      # (think: false и chat_template_kwargs игнорирует — проверено 14.11.2026).
+      spec:
+        compat:
+          thinking_format: openai
+          supports_reasoning_effort: true
+        thinking_levels:
+          off: none
 
   - id: builtin-dev-embedding
     type: Embedding
@@ -32,3 +42,13 @@ builtin_models:
       embedding_parameters:
         dimension: 1024
         truncate_prompt_tokens: 0
+
+  # Ollama реранк не отдаёт — тот же реранкер на CPU, что и в builtin_models.dev.yaml.
+  - id: builtin-dev-rerank
+    type: Rerank
+    source: remote
+    is_default: true
+    name: BAAI/bge-reranker-v2-m3
+    parameters:
+      base_url: http://rerank:8000
+      provider: huggingface_tei

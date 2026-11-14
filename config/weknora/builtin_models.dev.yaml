@@ -27,3 +27,14 @@ builtin_models:
         # fake-llm отдаёт детерминированные векторы на 1024 измерения (как bge-m3).
         dimension: 1024
         truncate_prompt_tokens: 0
+
+  # Настоящий реранкер на CPU (сервис rerank в compose.dev.yml): у fake-llm реранка нет,
+  # а режим агента с базами знаний без реранкера не запускается.
+  - id: builtin-dev-rerank
+    type: Rerank
+    source: remote
+    is_default: true
+    name: BAAI/bge-reranker-v2-m3
+    parameters:
+      base_url: http://rerank:8000
+      provider: huggingface_tei

@@ -20,6 +20,14 @@
 - Dev-стек: WeKnora `v0.9.0` (`weknora-app`, `weknora-frontend`, `weknora-docreader`) в `compose.dev.yml`, UI на `localhost:8080`;
   каталоги моделей `config/weknora/builtin_models.dev.yaml` (fake-llm) и `builtin_models.ollama.yaml`
   (`qwen3.5:9b` и `bge-m3` из Ollama на машине разработчика), переключение — `WEKNORA_MODELS_FILE`.
+- Dev-стек: реранкер `BAAI/bge-reranker-v2-m3` на CPU (сервис `rerank`, Hugging Face TEI `cpu-1.9.2`).
+- P-01: SQL русского BM25-индекса (`stemmer=russian`, русские стоп-слова, нижний регистр) —
+  `services/corp-ext/app/modules/provisioning/sql/search_index.sql`, проверен на dev-стеке.
+
+### Исправлено
+
+- Профиль Ollama: размышления `qwen3.5` выключаются (`reasoning_effort: none`); без этого служебные
+  генерации WeKnora при индексации возвращали пустой ответ.
 
 ### Изменено
 

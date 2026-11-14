@@ -69,6 +69,24 @@ services:
       redis:
         condition: service_healthy
 
+  rerank:
+    # Реранкер на CPU (SPEC §18.1). В проде — vLLM с /rerank в формате Cohere (§3.3), здесь — TEI:
+    # WeKnora понимает его штатным провайдером huggingface_tei. Веса (~2,3 ГБ) скачиваются
+    # с Hugging Face при первом запуске и остаются в томе rerank-models.
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.2
+    command: ["--model-id", "BAAI/bge-reranker-v2-m3", "--port", "8000", "--max-client-batch-size", "64"]
+    volumes:
+      - rerank-models:/data
+    ports:
+      - "127.0.0.1:8002:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      # Первый запуск качает model.safetensors (~2,3 ГБ): на медленном канале это больше часа.
+      start_period: 90m
+
   # --- WeKnora ---------------------------------------------------------------
   # Пока форка нет, берутся официальные образы закреплённого тега (пилот «как есть», SPEC §21 этап 0).
   # После `make weknora-build` образы из форка подставляются через WEKNORA_IMAGE_PREFIX/WEKNORA_VERSION.
@@ -118,7 +136,7 @@ services:
       # Исходящие запросы — только к своим сервисам (SPEC §17.2); проверяется на пилоте (пункт 16).
       SSRF_DNS_WHITELIST_ONLY: "true"
       # host.docker.internal — только для профиля Ollama (builtin_models.ollama.yaml), в проде его нет.
-      SSRF_WHITELIST: fake-llm,corp-ext,weknora-docreader,host.docker.internal
+      SSRF_WHITELIST: fake-llm,rerank,corp-ext,weknora-docreader,host.docker.internal
       SSRF_WHITELIST_EXTRA: ""
       OLLAMA_OPTIONAL: "true"
       LANGFUSE_ENABLED: "false"
@@ -141,6 +159,9 @@ services:
         condition: service_healthy
       fake-llm:
         condition: service_healthy
+      # WeKnora стартует без реранкера; при первом запуске rerank качает веса долго.
+      rerank:
+        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
       interval: 10s
@@ -165,3 +186,4 @@ volumes:
   pgdata:
   weknora-files:
   docreader-tmp:
+  rerank-models:

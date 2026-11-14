@@ -5,6 +5,8 @@
   Образы WeKnora пока официальные `v0.9.0`; после `make weknora-build` подставляются через
   `WEKNORA_IMAGE_PREFIX` и `WEKNORA_VERSION`. Модели — fake-llm по `config/weknora/builtin_models.dev.yaml`;
   с `WEKNORA_MODELS_FILE=builtin_models.ollama.yaml` — настоящие `qwen3.5:9b` и `bge-m3` из Ollama на хосте.
+  Реранкер в обоих профилях настоящий: сервис `rerank` (TEI на CPU, `BAAI/bge-reranker-v2-m3`, порт 8002);
+  веса скачиваются с Hugging Face при первом запуске и хранятся в томе `rerank-models`.
   До Keycloak (этап 1) вход в WeKnora — регистрацией.
 - `.env.example` — переменные для compose; рабочий `.env` в git не попадает.
 
