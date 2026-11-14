@@ -87,6 +87,19 @@ services:
       # Первый запуск качает model.safetensors (~2,3 ГБ): на медленном канале это больше часа.
       start_period: 90m
 
+  data-gateway:
+    # Встроенный MCP-сервис (SPEC §10.5); на этапе 0 — каркас с инструментом gateway_status.
+    build: ../../services/data-gateway
+    environment:
+      DATA_GATEWAY_TOKEN: ${DATA_GATEWAY_TOKEN:-dev-only-data-gateway-token}
+    ports:
+      - "127.0.0.1:8003:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   # --- Вход: mock-AD + Keycloak (SPEC §6, §18.1) ------------------------------
   mock-ad:
     build: ../mock-ad
@@ -205,7 +218,7 @@ services:
       SSRF_DNS_WHITELIST_ONLY: "true"
       # host.docker.internal — только для профиля Ollama (builtin_models.ollama.yaml), в проде его нет.
       # keycloak.localhost — адрес Keycloak для браузера: сервер его только проверяет, но не вызывает.
-      SSRF_WHITELIST: fake-llm,rerank,corp-ext,weknora-docreader,keycloak,keycloak.localhost,host.docker.internal
+      SSRF_WHITELIST: fake-llm,rerank,corp-ext,data-gateway,weknora-docreader,keycloak,keycloak.localhost,host.docker.internal
       SSRF_WHITELIST_EXTRA: ""
       OLLAMA_OPTIONAL: "true"
       LANGFUSE_ENABLED: "false"

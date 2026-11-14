@@ -134,3 +134,43 @@ def test_embeddings_are_deterministic(client: TestClient) -> None:
     assert len(data[0]["embedding"]) == main.EMBEDDING_DIM
     assert data[0]["embedding"] == data[1]["embedding"]
     assert data[0]["embedding"] != data[2]["embedding"]
+
+
+def _mcp_turn(client: TestClient, messages: list[dict[str, Any]]) -> dict[str, Any]:
+    body = client.post("/v1/chat/completions", json={"messages": messages}).json()
+    return dict(body["choices"][0]["message"])
+
+
+def test_mcp_scenario_walks_weknora_catalog_chain(client: TestClient) -> None:
+    messages: list[dict[str, Any]] = _user("[[scenario:mcp:gateway_status]] проверь")
+    first = _mcp_turn(client, messages)["tool_calls"][0]["function"]
+    assert first["name"] == main.DISCOVER_MCP
+    assert json.loads(first["arguments"]) == {"mode": "list_servers"}
+
+    messages += [{"role": "tool", "content": '{"servers":[{"server_id":"srv-1"}]}'}]
+    second = _mcp_turn(client, messages)["tool_calls"][0]["function"]
+    assert json.loads(second["arguments"]) == {
+        "mode": "describe",
+        "server_id": "srv-1",
+        "tool_name": "gateway_status",
+    }
+
+    messages += [{"role": "tool", "content": '{"tool_ref":"mcpt_abc","name":"gateway_status"}'}]
+    third = _mcp_turn(client, messages)["tool_calls"][0]["function"]
+    assert third["name"] == main.CALL_MCP
+    assert json.loads(third["arguments"]) == {"tool_ref": "mcpt_abc", "arguments": {}}
+
+    messages += [{"role": "tool", "content": '{"service":"data-gateway"}'}]
+    assert _mcp_turn(client, messages)["content"] == main.AFTER_MCP
+
+
+def test_mcp_scenario_reports_missing_server_id(client: TestClient) -> None:
+    messages = [*_user("[[scenario:mcp:gateway_status]]"), {"role": "tool", "content": "{}"}]
+    assert "server_id" in _mcp_turn(client, messages)["content"]
+
+
+def test_mcp_scenario_requires_tool_name(client: TestClient) -> None:
+    response = client.post(
+        "/v1/chat/completions", json={"messages": _user("[[scenario:mcp]] проверь")}
+    )
+    assert response.status_code == 400
