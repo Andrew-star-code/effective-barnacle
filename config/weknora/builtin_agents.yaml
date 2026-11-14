@@ -1,0 +1,83 @@
+# Встроенные агенты WeKnora (пилотный пункт 8, docs/status.md).
+# Монтируется поверх /app/config/builtin_agents.yaml (deploy/compose/compose.dev.yml).
+# Агентов, которых нет в файле, WeKnora не показывает: «Wiki Questioner» и «Data Analyst» убраны.
+# model_id / rerank_model_id — id из builtin_models*.yaml (одинаковые во всех профилях): без них
+# в новом пространстве агент без модели и чат отвечает «Agent не готов».
+# Веб-поиск выключен: контур закрытый (SPEC §17.2). Промпты и русификация — этап 2.
+
+builtin_agents:
+  - id: "builtin-quick-answer"
+    avatar: ""
+    is_builtin: true
+    i18n:
+      default:
+        name: "Быстрый ответ"
+        description: "Ответы по базам знаний со ссылками на источники"
+      ru-RU:
+        name: "Быстрый ответ"
+        description: "Ответы по базам знаний со ссылками на источники"
+    config:
+      agent_mode: "quick-answer"
+      model_id: "builtin-dev-chat"
+      rerank_model_id: "builtin-dev-rerank"
+      system_prompt_id: "default_kb"
+      context_template_id: "default_context"
+      temperature: 0.7
+      max_completion_tokens: 0
+      web_search_enabled: false
+      web_search_max_results: 0
+      multi_turn_enabled: true
+      history_turns: 5
+      kb_selection_mode: "all"
+      retrieve_kb_only_when_mentioned: false
+      faq_priority_enabled: true
+      faq_direct_answer_threshold: 0.9
+      faq_score_boost: 1.2
+      embedding_top_k: 10
+      keyword_threshold: 0.3
+      vector_threshold: 0.5
+      rerank_top_k: 10
+      rerank_threshold: 0.3
+      enable_query_expansion: true
+      enable_rewrite: true
+      fallback_strategy: "model"
+
+  - id: "builtin-smart-reasoning"
+    avatar: ""
+    is_builtin: true
+    i18n:
+      default:
+        name: "Ассистент"
+        description: "Рассуждает по шагам, ищет в базах знаний и вызывает корпоративные инструменты"
+      ru-RU:
+        name: "Ассистент"
+        description: "Рассуждает по шагам, ищет в базах знаний и вызывает корпоративные инструменты"
+    config:
+      agent_mode: "smart-reasoning"
+      agent_type: "rag-qa"
+      model_id: "builtin-dev-chat"
+      rerank_model_id: "builtin-dev-rerank"
+      system_prompt: ""
+      temperature: 0.7
+      max_completion_tokens: 0
+      max_iterations: 50
+      kb_selection_mode: "all"
+      retrieve_kb_only_when_mentioned: false
+      allowed_tools:
+        - "search_knowledge"
+        - "read_document"
+        - "list_documents"
+        - "query_knowledge_graph"
+        - "ask_user"
+      web_search_enabled: false
+      web_search_max_results: 0
+      reflection_enabled: false
+      multi_turn_enabled: true
+      faq_priority_enabled: true
+      faq_direct_answer_threshold: 0.9
+      faq_score_boost: 1.2
+      embedding_top_k: 10
+      keyword_threshold: 0.3
+      vector_threshold: 0.5
+      rerank_top_k: 10
+      rerank_threshold: 0.3

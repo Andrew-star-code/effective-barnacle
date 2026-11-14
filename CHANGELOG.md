@@ -26,6 +26,13 @@
   клиент `weknora`); WeKnora входит через OIDC.
 - P-01: SQL русского BM25-индекса (`stemmer=russian`, русские стоп-слова, нижний регистр) —
   `services/corp-ext/app/modules/provisioning/sql/search_index.sql`, проверен на dev-стеке.
+- `data-gateway`: каркас MCP-сервиса (Streamable HTTP, токен сервиса, инструмент `gateway_status`);
+  `fake-llm`: сценарий `[[scenario:mcp:<инструмент>]]` проходит цепочку MCP-вызова WeKnora.
+- `config/weknora/builtin_agents.yaml`: встроенные агенты сразу с моделью и реранкером, лишние скрыты,
+  веб-поиск выключен.
+- `eval/rag/wikifacts.py`: hit@5 и MRR@10 поиска WeKnora на открытом корпусе wikifacts-articles_v0;
+  P-01 поднял hit@5 BM25 с 0,906 до 0,969. В реестр патчей добавлен P-12 — BM25-поиск в базах
+  без генерации вопросов падает на ParadeDB 0.25.11.
 
 ### Исправлено
 

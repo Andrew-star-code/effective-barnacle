@@ -11,6 +11,9 @@
 - `builtin_models.ollama.yaml` — есть: `qwen3.5:9b` и `bge-m3` через Ollama на машине разработчика;
   включается `WEKNORA_MODELS_FILE=builtin_models.ollama.yaml make dev-up`;
   в обоих профилях реранкер — `BAAI/bge-reranker-v2-m3` в сервисе `rerank` (TEI на CPU)
+- `builtin_agents.yaml` — есть: встроенные агенты «Быстрый ответ» и «Ассистент» с моделью и реранкером
+  по умолчанию (без этого в новом пространстве «Agent не готов»); остальные встроенные агенты скрыты,
+  веб-поиск выключен
 - `builtin_models.yaml` — прод-каталог
 - `system_settings.yaml`
 - `prompt_templates/`

@@ -228,6 +228,8 @@ services:
       - docreader-tmp:/tmp/docreader:ro
       # Профиль моделей: fake-llm по умолчанию; WEKNORA_MODELS_FILE=builtin_models.ollama.yaml — Ollama на хосте.
       - ../../config/weknora/${WEKNORA_MODELS_FILE:-builtin_models.dev.yaml}:/app/config/builtin_models.yaml:ro
+      # Встроенные агенты с моделью по умолчанию (пилотный пункт 8).
+      - ../../config/weknora/builtin_agents.yaml:/app/config/builtin_agents.yaml:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
