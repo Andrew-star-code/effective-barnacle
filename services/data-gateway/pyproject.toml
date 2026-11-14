@@ -1,0 +1,37 @@
+[project]
+name = "data-gateway"
+version = "0.1.0"
+description = "Семантический слой над SQL-БД — встроенный MCP-сервис WeKnora (SPEC §10.5)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "mcp>=1.20",
+    "uvicorn>=0.32",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "httpx>=0.28",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["app", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -5,8 +5,9 @@ SHELL := bash
 
 CORP_EXT := services/corp-ext
 FAKE_LLM := services/fake-llm
+DATA_GW  := services/data-gateway
 ADMIN    := services/corp-admin
-PY_SERVICES := $(CORP_EXT) $(FAKE_LLM)
+PY_SERVICES := $(CORP_EXT) $(FAKE_LLM) $(DATA_GW)
 PNPM ?= pnpm
 COMPOSE := docker compose -f deploy/compose/compose.dev.yml
 
