@@ -1,6 +1,5 @@
-# Dev-стек, часть 1: хранилища и свои сервисы.
-# WeKnora (из подмодуля), Keycloak, mock-AD, embed/rerank на CPU и тестовая MS SQL
-# добавляются на этапе 0–1 после пилота (docs/status.md).
+# Dev-стек: хранилища, свои сервисы и WeKnora (UI — http://localhost:8080).
+# Keycloak, mock-AD, embed/rerank на CPU и тестовая MS SQL добавляются на этапах 0–1 (docs/status.md).
 name: ai-assistant-dev
 
 services:
@@ -70,5 +69,99 @@ services:
       redis:
         condition: service_healthy
 
+  # --- WeKnora ---------------------------------------------------------------
+  # Пока форка нет, берутся официальные образы закреплённого тега (пилот «как есть», SPEC §21 этап 0).
+  # После `make weknora-build` образы из форка подставляются через WEKNORA_IMAGE_PREFIX/WEKNORA_VERSION.
+  weknora-docreader:
+    image: ${WEKNORA_IMAGE_PREFIX:-wechatopenai}/weknora-docreader:${WEKNORA_VERSION:-v0.9.0}
+    environment:
+      TZ: UTC
+      DOCREADER_IMAGE_OUTPUT_DIR: /tmp/docreader
+      SSRF_DNS_WHITELIST_ONLY: "true"
+    volumes:
+      - docreader-tmp:/tmp/docreader
+    healthcheck:
+      # В образе нет grpc_health_probe; достаточно, что порт gRPC слушается.
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('127.0.0.1', 50051), 2)"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  weknora-app:
+    image: ${WEKNORA_IMAGE_PREFIX:-wechatopenai}/weknora-app:${WEKNORA_VERSION:-v0.9.0}
+    environment:
+      TZ: UTC
+      GIN_MODE: release
+      LOG_LEVEL: info
+      # Без него генерации на китайском (SPEC §13.2).
+      WEKNORA_LANGUAGE: ru-RU
+      AUTO_MIGRATE: "true"
+      DB_DRIVER: postgres
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-dev-only-password}
+      DB_NAME: ${POSTGRES_DB:-weknora}
+      RETRIEVE_DRIVER: postgres
+      REDIS_ADDR: redis:6379
+      REDIS_DB: "0"
+      DOCREADER_ADDR: weknora-docreader:50051
+      DOCREADER_TRANSPORT: grpc
+      STORAGE_TYPE: local
+      LOCAL_STORAGE_BASE_DIR: /data/files
+      # Секреты только для dev; без явного JWT_SECRET сессии слетают при перезапуске (AGENTS.md §7).
+      JWT_SECRET: ${WEKNORA_JWT_SECRET:-dev-only-jwt-secret-change-me-0123456789}
+      SYSTEM_AES_KEY: ${WEKNORA_SYSTEM_AES_KEY:-dev-only-aes-key-32-bytes-long!!}
+      # До Keycloak (этап 1) вход — по регистрации в WeKnora; в проде регистрация выключена.
+      DISABLE_REGISTRATION: "false"
+      # Исходящие запросы — только к своим сервисам (SPEC §17.2); проверяется на пилоте (пункт 16).
+      SSRF_DNS_WHITELIST_ONLY: "true"
+      # host.docker.internal — только для профиля Ollama (builtin_models.ollama.yaml), в проде его нет.
+      SSRF_WHITELIST: fake-llm,corp-ext,weknora-docreader,host.docker.internal
+      SSRF_WHITELIST_EXTRA: ""
+      OLLAMA_OPTIONAL: "true"
+      LANGFUSE_ENABLED: "false"
+      WEKNORA_SANDBOX_DOCKER_ENABLED: "false"
+    volumes:
+      - weknora-files:/data/files
+      - docreader-tmp:/tmp/docreader:ro
+      # Профиль моделей: fake-llm по умолчанию; WEKNORA_MODELS_FILE=builtin_models.ollama.yaml — Ollama на хосте.
+      - ../../config/weknora/${WEKNORA_MODELS_FILE:-builtin_models.dev.yaml}:/app/config/builtin_models.yaml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:8081:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      weknora-docreader:
+        condition: service_healthy
+      fake-llm:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  weknora-frontend:
+    image: ${WEKNORA_IMAGE_PREFIX:-wechatopenai}/weknora-ui:${WEKNORA_VERSION:-v0.9.0}
+    environment:
+      DEFAULT_LOCALE: ru-RU
+      APP_HOST: weknora-app
+      APP_PORT: "8080"
+      APP_SCHEME: http
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      weknora-app:
+        condition: service_healthy
+
 volumes:
   pgdata:
+  weknora-files:
+  docreader-tmp:

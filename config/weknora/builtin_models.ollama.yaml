@@ -1,0 +1,34 @@
+# Каталог моделей dev-стека с настоящими моделями через Ollama на машине разработчика (SPEC §18.1).
+# Включается так: WEKNORA_MODELS_FILE=builtin_models.ollama.yaml make dev-up
+# Нужно заранее: ollama pull qwen3.5:9b && ollama pull bge-m3
+#
+# id те же, что в builtin_models.dev.yaml: при переключении профиля строки моделей в WeKnora
+# обновляются на месте. Векторы fake-llm и bge-m3 несовместимы (размерность та же — 1024),
+# поэтому базы знаний, проиндексированные под другим профилем, нужно переиндексировать.
+#
+# Ограничение: режим размышлений Ollama управляется иначе, чем у vLLM; пилотный пункт 7
+# (переключатель thinking) проверяется только на vLLM.
+builtin_models:
+  - id: builtin-dev-chat
+    type: KnowledgeQA
+    source: remote
+    is_default: true
+    name: qwen3.5:9b
+    parameters:
+      base_url: http://host.docker.internal:11434/v1
+      api_key: dev-not-a-secret
+      provider: generic
+      context_window: 32768
+
+  - id: builtin-dev-embedding
+    type: Embedding
+    source: remote
+    is_default: true
+    name: bge-m3
+    parameters:
+      base_url: http://host.docker.internal:11434/v1
+      api_key: dev-not-a-secret
+      provider: generic
+      embedding_parameters:
+        dimension: 1024
+        truncate_prompt_tokens: 0

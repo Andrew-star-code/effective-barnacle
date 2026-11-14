@@ -1,0 +1,29 @@
+# Каталог моделей dev-стека: все модели — fake-llm (services/fake-llm), без GPU.
+# Монтируется в контейнер WeKnora как /app/config/builtin_models.yaml (deploy/compose/compose.dev.yml).
+# Прод-каталог (`builtin_models.yaml`) — этап 2 (SPEC §9.1); для ручной проверки маленькой моделью
+# поменяйте base_url и name на свой OpenAI-совместимый сервер (SPEC §18.1).
+builtin_models:
+  - id: builtin-dev-chat
+    type: KnowledgeQA
+    source: remote
+    is_default: true
+    name: fake-chat
+    parameters:
+      base_url: http://fake-llm:8000/v1
+      api_key: dev-not-a-secret
+      provider: generic
+      context_window: 32768
+
+  - id: builtin-dev-embedding
+    type: Embedding
+    source: remote
+    is_default: true
+    name: fake-embed
+    parameters:
+      base_url: http://fake-llm:8000/v1
+      api_key: dev-not-a-secret
+      provider: generic
+      embedding_parameters:
+        # fake-llm отдаёт детерминированные векторы на 1024 измерения (как bge-m3).
+        dimension: 1024
+        truncate_prompt_tokens: 0

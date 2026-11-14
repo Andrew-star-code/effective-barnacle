@@ -8,10 +8,10 @@
 | --- | --- |
 | Отчёт пилота: ответы на все пункты ПИЛОТ | не начат — список ниже |
 | Русский поиск на 200 документах: hit@5 до и после P-01 | не начат |
-| `make dev-up` поднимает стек одной командой | частично: Postgres (ParadeDB), Redis, fake-llm, corp-ext — проверено запуском с чистого тома 14.11.2026 (миграция `0001` применена, расширения `vector` 0.8.4 и `pg_search` 0.25.11 на месте, `/health` отвечает); WeKnora, Keycloak, mock-AD ещё не включены |
+| `make dev-up` поднимает стек одной командой | частично: Postgres (ParadeDB), Redis, fake-llm, corp-ext и WeKnora `v0.9.0` (app, frontend, docreader; официальные образы) — проверено запуском 14.11.2026, все сервисы healthy, WeKnora применила каталог моделей; Keycloak, mock-AD, `embed`/`rerank` на CPU ещё не включены |
 | `make weknora-build` собирает образы из форка | заглушка — форк во внутреннем git ещё не создан |
 | `make check` зелёный; pre-commit-хуки | lint, типы, тесты, сборка фронтенда, docs-check — зелёные; образы `corp-ext` и `fake-llm` собираются. Одной командой целиком `make check` не запускался: в WSL нет Node и pnpm, шаги фронтенда и сборка образов проверены отдельно |
-| fake-llm: стрим с размышлениями и вызовом MCP-инструмента, WeKnora показывает корректно | fake-llm готов и покрыт тестами; связка с WeKnora не проверена |
+| fake-llm: стрим с размышлениями и вызовом MCP-инструмента, WeKnora показывает корректно | частично, проверено запуском в браузере 14.11.2026: размышления — отдельный сворачиваемый блок, ответ стримом; вызов встроенного инструмента в режиме агента показывается шагом, ошибка инструмента не ломает цикл. Вызов именно MCP-инструмента не проверен — нет ни одного MCP-сервиса (первый — `corp-files`, этап 4, или `data-gateway`) |
 | В `docs/` есть индекс, ADR, `status.md`, `patches.md` | готово |
 
 ### Что сделано (13.11.2026)
@@ -31,6 +31,17 @@
 - Неделя пилота и отчёт по пунктам ПИЛОТ; SQL пересоздания BM25-индекса с русским токенизатором (войдёт в `provision --search-index`).
 - Каркас `data-gateway` (сейчас только README).
 - Подключить taskiq в `corp-ext` (ADR 0015) — вместе с первой фоновой задачей, этап 1.
+
+### Находки при подъёме WeKnora в dev (14.11.2026)
+
+Проверено запуском (UI и API, учётка из `deploy/compose/.env.example`):
+
+- Признак `is_default` в `builtin_models.yaml` не задаёт модель встроенным агентам: у «Quick Answer» и «Smart Reasoning» в новом пространстве пустой `model_id`, чат отвечает «Agent не готов». Значит, раскладка (`provision`, этап 1–2) должна проставлять модель агентам каждого личного пространства — через `PUT /api/v1/agents/{id}` это работает.
+- Режим агента со включёнными базами знаний требует модель реранжирования; без `rerank` в dev-стеке «Smart Reasoning» не запускается. Временно в dev у агента выключены базы (`kb_selection_mode: none`). Нужен `rerank` на CPU (§18.1) — следующий шаг этапа 0.
+- Непереведённые строки при `DEFAULT_LOCALE=ru-RU`: «Go to configure →», «Edit Agent», «Model Config», «Basic Info», «Select Agent», «Built-in Agents», «Setup needed», названия встроенных агентов в подписи поля ввода («Smart Reasoning»), описания агентов приходят с бэкенда на английском. Вход в P-08/P-07 (этап 2).
+- Ссылки на github.com и weknora.weixin.qq.com на странице входа — убрать вместе с остальным лишним (§17.2).
+
+Профиль `builtin_models.ollama.yaml` (`qwen3.5:9b`, `bge-m3`) добавлен; проверка на реальной модели — после загрузки моделей.
 
 ## Решения по вопросам к плану (13.11.2026)
 
@@ -96,7 +107,7 @@
 
 | Задача | Кто | Ветка |
 | --- | --- | --- |
-| — | — | — |
+| WeKnora в dev-стеке, профили моделей | агент | `agent/dev-stack-weknora` |
 
 ## Демо-сценарий каркаса
 
@@ -108,4 +119,9 @@ curl -s localhost:8000/health     # {"status":"ok","service":"corp-ext",...}
 curl -s localhost:8001/v1/chat/completions -H 'content-type: application/json' \
   -d '{"messages":[{"role":"user","content":"[[scenario:thinking]] привет"}]}'
 cd services/corp-admin && pnpm dev   # http://localhost:5174/corp-admin/ — дашборд с версией corp-ext
+# WeKnora: http://localhost:8080, учётка — WEKNORA_DEV_* из deploy/compose/.env.example
+# (один раз зарегистрировать в UI). В «Быстрый ответ» выбрать модель fake-chat в настройках агента,
+# затем: «[[scenario:thinking]] привет» — блок размышлений и ответ стримом.
+# Реальная модель (нужны ollama pull qwen3.5:9b и bge-m3):
+WEKNORA_MODELS_FILE=builtin_models.ollama.yaml make dev-up
 ```
