@@ -1,3 +1,4 @@
 [submodule "weknora"]
 	path = weknora
-	url = https://github.com/Tencent/WeKnora
+	url = https://github.com/Andrew-star-code/WeKnora.git
+	branch = corp/v0.9.0

@@ -5,7 +5,7 @@
 `make docs-check` проверяет, что каждый коммит `P-NN:` из подмодуля отмечен здесь как применённый.
 
 - База: WeKnora, тег `v0.9.0` (коммит `f17ee8a8`).
-- Форк и ветка `corp/v<версия>`: ещё не созданы; подмодуль указывает на `https://github.com/Tencent/WeKnora`.
+- Форк: `https://github.com/Andrew-star-code/WeKnora` (временно на GitHub — до внутреннего git, SPEC §2.4), ветка `corp/v0.9.0` от тега; подмодуль указывает на неё. Upstream — `https://github.com/Tencent/WeKnora` (remote `upstream` в подмодуле).
 
 Статусы: `запланирован` → `применён` (коммит в форке) → `в PR` (отправлен в WeKnora) → `принят` (удаляется из реестра при следующем обновлении).
 
@@ -23,5 +23,6 @@
 | P-10 ★ | Промпты памяти на английском с `{{language}}` | `internal/application/service/memory/` | 12 | запланирован | — | да |
 | P-11 | Сборка фронтенда без CDN: `xlsx` из локального зеркала | `frontend/package.json`, Dockerfile фронтенда | 10 | запланирован | — | возможно |
 | P-12 | BM25-поиск в базах без генерации вопросов: фильтр-исключение сгенерированных вопросов (`GeneratedQuestionRowPredicate`) ParadeDB 0.25.11 отвергает («Unsupported query shape») в выборке top-N — ключевой поиск падает, гибрид идёт только по векторам. Исключать такие строки после выборки или фильтром, который ParadeDB проталкивает | `internal/application/repository/retriever/postgres/repository.go`, `internal/types/generated_question_retrieval.go` | 2–3 | запланирован; найден на пилоте 14.11.2026, в upstream `main` не исправлен | — | да, баг |
+| P-13 | Сборка `weknora-app` из исходников: go ≥ 1.26.11 (образ `golang:1.26-bookworm` не закреплён) отвергает архив `anydoc` с секциями LLVM bitcode из стандартной библиотеки Rust («disallowed LTO section ".llvmbc"»). После сборки архива секции `.llvmbc`/`.llvmcmd` вырезаются `objcopy` | `scripts/build-anydoc-lib.sh` | 0 | применён в ветке форка `agent/p-13-anydoc-bitcode` (влить в `corp/v0.9.0` fast-forward), найден 15.11.2026 | `63fb1d1ed` | да, баг сборки |
 
 Возможные дополнительные патчи по итогам пилота: поведение при отказе реранкера (§11.4), проверки загрузок (§10.3), способ выключения встроенных агентов (§9.3).

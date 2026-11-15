@@ -71,8 +71,8 @@ dev-logs: ## логи dev-стека
 e2e: ## e2e-тесты Playwright — этап 1
 	@echo "e2e: не реализовано (этап 1, SPEC §20.1)"; exit 1
 
-weknora-build: ## образы WeKnora из подмодуля — этап 0, после решения по форку
-	@echo "weknora-build: не реализовано (этап 0, docs/status.md)"; exit 1
+weknora-build: ## образы WeKnora из подмодуля (форк, ветка corp/v<версия>)
+	tools/weknora-build.sh
 
 lang-scan: ## поиск иероглифов в пользовательских строках WeKnora — этап 2
 	@echo "lang-scan: не реализовано (этап 2, SPEC §13.4)"; exit 1
